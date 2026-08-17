@@ -10,10 +10,20 @@ import { Server } from "socket.io";
 // Create Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
-  
-// Initialize socket.io server
+
+// Allowed origins setup
+const allowedOrigins = [
+  "https://chat-app-frontend-seven-xi.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000"
+];
+
+// Initialize socket.io server with strict CORS
 export const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  }
 });
 
 // Store online users
@@ -39,7 +49,13 @@ io.on("connection", (socket) => {
 // Middleware setup
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(cors({ origin: "*", credentials: true }));
+
+// Express CORS Fix (withCredentials require exact origin, not "*")
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"]
+}));
 
 // Routes setup
 app.use("/api/status", (req, res) => res.send("Server is live"));
@@ -53,4 +69,5 @@ server.listen(PORT, async () => {
   console.log("Server is running on PORT: " + PORT);
   await connectDB();
 });
+
 export default app;
