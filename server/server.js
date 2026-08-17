@@ -15,7 +15,7 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "https://chat-app-frontend-seven-xi.vercel.app",
   "http://localhost:5173",
-  "http://localhost:3000"
+  
 ];
 
 // Initialize socket.io server with strict CORS
