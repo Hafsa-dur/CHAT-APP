@@ -5,7 +5,8 @@ import {
   BsImage, 
   BsSendFill, 
   BsInfoCircle,
-  BsX
+  BsX,
+  BsArrowLeft
 } from 'react-icons/bs';
 import { AuthContext } from '../context/AuthContext';
 import { ChatContext } from '../context/ChatContext';
@@ -27,8 +28,9 @@ const Home = () => {
   // UI States
   const [showMenu, setShowMenu] = useState(false);
   const [messageText, setMessageText] = useState('');
-  const [imageBase64, setImageBase64] = useState(null); // Fixed: Base64 String state
+  const [imageBase64, setImageBase64] = useState(null);
   const [searchInput, setSearchInput] = useState('');
+  const [showRightSidebar, setShowRightSidebar] = useState(false);
 
   const fileInputRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -42,6 +44,7 @@ const Home = () => {
   useEffect(() => {
     if (selectedUser?._id) {
       getMessages(selectedUser._id);
+      setShowRightSidebar(false); // Reset profile view on user change
     }
   }, [selectedUser]);
 
@@ -50,7 +53,7 @@ const Home = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Handle File Selection and Convert to Base64 (FIXED)
+  // Handle File Selection
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -63,7 +66,7 @@ const Home = () => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onloadend = () => {
-      setImageBase64(reader.result); // Base64 string set ho rahi hai
+      setImageBase64(reader.result);
     };
   };
 
@@ -86,17 +89,19 @@ const Home = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Filter media items for Right Sidebar (FIXED)
+  // Filter media items
   const mediaMessages = messages?.filter((msg) => msg.image && msg.image.trim() !== '') || [];
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/40 via-black to-black">
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-0 md:p-4 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/40 via-black to-black">
       
       {/* Main Glassmorphic Container */}
-      <div className="w-full max-w-6xl h-[85vh] bg-slate-950/70 border border-slate-800/80 rounded-2xl backdrop-blur-xl flex overflow-hidden shadow-2xl relative">
+      <div className="w-full max-w-6xl h-screen md:h-[85vh] bg-slate-950/70 border-0 md:border border-slate-800/80 md:rounded-2xl backdrop-blur-xl flex overflow-hidden shadow-2xl relative">
         
         {/* ================= 1. LEFT SIDEBAR (USERS LIST) ================= */}
-        <div className="w-80 border-r border-slate-800/80 flex flex-col bg-slate-900/30">
+        <div className={`w-full md:w-80 border-r border-slate-800/80 flex flex-col bg-slate-900/30 ${
+          selectedUser ? 'hidden md:flex' : 'flex'
+        }`}>
           
           {/* Header */}
           <div className="p-4 flex justify-between items-center border-b border-slate-800/60 relative">
@@ -144,7 +149,7 @@ const Home = () => {
             />
           </div>
 
-          {/* Dynamic Real User List from Database */}
+          {/* Dynamic Real User List */}
           <div className="flex-1 overflow-y-auto px-2 space-y-1">
             {filteredUsers && filteredUsers.length > 0 ? (
               filteredUsers.map((user) => {
@@ -192,13 +197,23 @@ const Home = () => {
         </div>
 
         {/* ================= 2. CENTER PANEL (CHAT ROOM) ================= */}
-        <div className="flex-1 flex flex-col bg-slate-950/20">
+        <div className={`flex-1 flex flex-col bg-slate-950/20 ${
+          !selectedUser ? 'hidden md:flex' : showRightSidebar ? 'hidden lg:flex' : 'flex'
+        }`}>
           
           {selectedUser ? (
             <>
               {/* Active Chat Header */}
               <div className="p-4 border-b border-slate-800/60 flex justify-between items-center bg-slate-900/20">
                 <div className="flex items-center gap-3">
+                  {/* Mobile Back Button */}
+                  <button 
+                    onClick={() => setSelectedUser(null)}
+                    className="md:hidden p-1.5 hover:bg-slate-800 rounded-full text-slate-300"
+                  >
+                    <BsArrowLeft size={18} />
+                  </button>
+
                   <img 
                     src={selectedUser.profilePic || 'https://i.pravatar.cc/150'} 
                     alt="" 
@@ -211,7 +226,13 @@ const Home = () => {
                     </span>
                   </div>
                 </div>
-                <button className="text-slate-400 hover:text-white"><BsInfoCircle /></button>
+
+                <button 
+                  onClick={() => setShowRightSidebar(!showRightSidebar)}
+                  className="text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800"
+                >
+                  <BsInfoCircle size={18} />
+                </button>
               </div>
 
               {/* Dynamic Chat Messages Window */}
@@ -223,13 +244,12 @@ const Home = () => {
                     return (
                       <div 
                         key={msg._id || index}
-                        className={`p-3 rounded-2xl max-w-xs text-sm border ${
+                        className={`p-3 rounded-2xl max-w-xs sm:max-w-sm text-sm border ${
                           isMyMessage 
                             ? 'bg-purple-900/60 border-purple-500/30 ml-auto' 
                             : 'bg-slate-800/80 border-slate-700/50'
                         }`}
                       >
-                        {/* Image Render Fix */}
                         {msg.image && (
                           <img 
                             src={msg.image} 
@@ -247,7 +267,7 @@ const Home = () => {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Image Preview Window before sending */}
+              {/* Image Preview Window */}
               {imageBase64 && (
                 <div className="px-4 py-2 bg-slate-900/60 border-t border-slate-800 flex items-center gap-2">
                   <div className="relative">
@@ -297,7 +317,7 @@ const Home = () => {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-4">
               <div className="w-16 h-16 rounded-2xl bg-purple-600/20 text-purple-400 flex items-center justify-center text-2xl mb-3 border border-purple-500/30">
                 💬
               </div>
@@ -309,7 +329,20 @@ const Home = () => {
 
         {/* ================= 3. RIGHT PANEL (PROFILE SIDEBAR) ================= */}
         {selectedUser && (
-          <div className="w-72 border-l border-slate-800/80 p-6 flex flex-col items-center bg-slate-900/40 text-center overflow-y-auto">
+          <div className={`w-full md:w-72 border-l border-slate-800/80 p-6 flex-col items-center bg-slate-900/40 text-center overflow-y-auto ${
+            showRightSidebar ? 'flex' : 'hidden lg:flex'
+          }`}>
+            
+            {/* Mobile Close Button for Profile */}
+            <div className="w-full flex justify-start lg:hidden mb-2">
+              <button 
+                onClick={() => setShowRightSidebar(false)} 
+                className="p-1 text-slate-400 hover:text-white"
+              >
+                <BsArrowLeft size={20} />
+              </button>
+            </div>
+
             <img 
               src={selectedUser.profilePic || 'https://i.pravatar.cc/150'} 
               alt="" 
@@ -318,7 +351,7 @@ const Home = () => {
             <h3 className="font-semibold text-base">{selectedUser.fullName || selectedUser.name}</h3>
             <p className="text-xs text-slate-400 mt-1 mb-6">{selectedUser.bio || 'Hey there! I am using QuickChat.'}</p>
 
-            {/* Dynamic Media Section (FIXED) */}
+            {/* Dynamic Media Section */}
             <div className="w-full text-left border-t border-slate-800/80 pt-4">
               <span className="text-xs text-slate-400 font-medium block mb-3">
                 Media ({mediaMessages.length})
