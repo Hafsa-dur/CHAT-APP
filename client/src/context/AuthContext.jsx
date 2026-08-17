@@ -4,6 +4,7 @@ import toast,{ Toaster } from "react-hot-toast";
 import {io} from "socket.io-client";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
+axios.defaults.withCredentials = true;
 axios.defaults.baseURL = backendUrl;
 export const AuthContext = createContext(); 
 export const AuthContextProvider = ({ children })=>{
